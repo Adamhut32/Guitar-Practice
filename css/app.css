@@ -1,0 +1,113 @@
+/* Layout idea: a phone-first practice tool on a rosewood fretboard — brass accents like frets, bone-white text like the nut. One screen, bottom tab bar. */
+:root{
+  --wood:#1f1714;        /* rosewood background */
+  --wood-2:#2a201b;      /* raised surface */
+  --wood-3:#3a2c25;      /* borders / inlays */
+  --bone:#efe6d6;        /* primary text */
+  --dust:#b6a893;        /* secondary text */
+  --brass:#d9a441;       /* accent */
+  --sage:#8fb58a;        /* good */
+  --rust:#d9774e;        /* attention */
+  --display:"Zilla Slab", Georgia, serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--wood);color:var(--bone);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.app{max-width:560px;margin:0 auto;min-height:100%;padding:16px 16px 96px;display:flex;flex-direction:column;gap:16px}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding-top:4px}
+h1{font-family:var(--display);font-weight:700;font-size:26px;margin:0;letter-spacing:.2px;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:20px;margin:0 0 8px;text-wrap:balance}
+h3{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--dust);margin:0 0 8px;font-weight:600}
+.sub{color:var(--dust);font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--wood-3);color:var(--dust);white-space:nowrap}
+.pill.brass{border-color:var(--brass);color:var(--brass)}
+.pill.sage{border-color:var(--sage);color:var(--sage)}
+.pill.rust{border-color:var(--rust);color:var(--rust)}
+.card{background:var(--wood-2);border:1px solid var(--wood-3);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.card.accent{border-color:var(--brass)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.btn{appearance:none;border:1px solid var(--wood-3);background:var(--wood-3);border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer;min-height:44px}
+.btn:hover{border-color:var(--dust)}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:#1f1714}
+.btn.ghost{background:transparent}
+.btn.small{min-height:34px;padding:6px 10px;font-size:14px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--wood-3);background:transparent;border-radius:999px;padding:8px 14px;font-weight:600;cursor:pointer;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:#1f1714}
+.banner{border-left:3px solid var(--rust);background:rgba(217,119,78,.1);padding:10px 12px;border-radius:8px;font-size:14px}
+.banner.info{border-color:var(--brass);background:rgba(217,164,65,.08)}
+/* plan */
+.blocks{display:flex;flex-direction:column;gap:8px}
+.block{display:grid;grid-template-columns:48px 1fr;gap:12px;padding:12px;border-radius:12px;border:1px solid var(--wood-3);background:var(--wood)}
+.block.now{border-color:var(--brass);background:rgba(217,164,65,.07)}
+.block.done{opacity:.55}
+.block .min{font-family:var(--mono);font-size:18px;color:var(--brass);text-align:center;padding-top:2px}
+.block .min small{display:block;font-size:11px;color:var(--dust);font-family:var(--body)}
+.block .name{font-weight:600}
+.block .tip{color:var(--dust);font-size:14px;margin-top:2px}
+.timer{font-family:var(--mono);font-size:56px;text-align:center;letter-spacing:1px;font-variant-numeric:tabular-nums;line-height:1}
+/* songs */
+.song{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px;border:1px solid var(--wood-3);border-radius:12px;background:var(--wood);cursor:pointer;text-align:left;width:100%}
+.song:hover{border-color:var(--dust)}
+.song .t{font-weight:600}
+.song .a{color:var(--dust);font-size:13px}
+.song .badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+label{font-size:13px;color:var(--dust);display:flex;flex-direction:column;gap:4px}
+input[type=text],input[type=number],select,textarea{background:var(--wood);border:1px solid var(--wood-3);border-radius:10px;padding:10px;min-height:44px;width:100%}
+textarea{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{flex-direction:row;align-items:center;gap:8px;color:var(--bone);font-size:15px}
+.check input{width:22px;height:22px;accent-color:var(--brass)}
+/* metronome */
+.bpm{font-family:var(--mono);font-size:72px;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
+.beats{display:flex;justify-content:center;gap:12px;padding:8px 0}
+.beat{width:18px;height:18px;border-radius:50%;border:2px solid var(--wood-3)}
+.beat.on{background:var(--brass);border-color:var(--brass)}
+.beat.on.first{background:var(--rust);border-color:var(--rust)}
+input[type=range]{width:100%;accent-color:var(--brass)}
+/* progress */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--wood);border:1px solid var(--wood-3);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-family:var(--mono);font-size:24px;color:var(--brass);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--dust)}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:90px;padding-top:6px;border-bottom:1px solid var(--wood-3)}
+.bar{background:var(--brass);border-radius:4px 4px 0 0;min-height:2px}
+.bar.zero{background:var(--wood-3)}
+.barlabels{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-size:11px;color:var(--dust);text-align:center}
+.list{display:flex;flex-direction:column;gap:6px}
+.li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--wood-3);font-size:14px}
+.li:last-child{border-bottom:0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+/* nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--wood-2);border-top:1px solid var(--wood-3);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs .inner{display:grid;grid-template-columns:repeat(4,1fr);width:100%;max-width:560px}
+nav.tabs button{background:none;border:0;padding:12px 4px 14px;font-weight:600;font-size:13px;color:var(--dust);cursor:pointer;border-top:2px solid transparent}
+nav.tabs button[aria-current="page"]{color:var(--brass);border-top-color:var(--brass)}
+/* sheet */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.sheet-bg.open{display:flex}
+.sheet{background:var(--wood-2);border:1px solid var(--wood-3);border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:92%;overflow:auto;padding:18px 16px 28px;display:flex;flex-direction:column;gap:12px}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--bone);color:var(--wood);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30}
+.toast.show{opacity:1}
+.empty{color:var(--dust);font-size:14px;padding:8px 0}
+a{color:var(--brass)}
+.hidden{display:none !important}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+@media (max-width:380px){.grid2{grid-template-columns:1fr}.timer{font-size:46px}.bpm{font-size:60px}}
+/* sign-in */
+.auth{max-width:420px;margin:8vh auto 0;display:flex;flex-direction:column;gap:16px}
+.auth .brand{font-family:var(--display);font-size:34px;font-weight:700}
+.auth .tagline{color:var(--dust)}
+.auth form{display:flex;flex-direction:column;gap:12px}
+.auth .err{color:var(--rust);font-size:14px;min-height:1.2em}
+.linkbtn{background:none;border:0;color:var(--brass);font-weight:600;cursor:pointer;padding:6px 0;text-align:left}
+.app.hidden-app{display:none}
+input[type=email],input[type=password],input[type=date]{background:var(--wood);border:1px solid var(--wood-3);border-radius:10px;padding:10px;min-height:44px;width:100%}
+body{padding-top:env(safe-area-inset-top)}

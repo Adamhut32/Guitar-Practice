@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Practice Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#1f1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Practice">
+</head>
+<body>
+<section class="auth hidden" id="authView" aria-label="Sign in">
+  <div><div class="brand">Practice Log</div><div class="tagline">Your guitar practice, songs and progress.</div></div>
+  <form id="authForm" class="card">
+    <h2 id="authTitle">Sign in</h2>
+    <label for="aEmail">Email<input type="email" id="aEmail" autocomplete="email" required></label>
+    <label for="aPass">Password<input type="password" id="aPass" autocomplete="current-password" minlength="6" required></label>
+    <div class="err" id="authErr" role="alert"></div>
+    <button class="btn primary" type="submit" id="authSubmit">Sign in</button>
+    <button class="linkbtn" type="button" id="authToggle">New here? Create an account</button>
+  </form>
+</section>
+<div class="app hidden-app" id="app">
+  <header class="top">
+    <div>
+      <h1>Practice Log</h1>
+      <div class="sub" id="phaseLine">Week 1 · Comeback</div>
+    </div>
+    <span class="pill" id="syncPill">Loading…</span>
+  </header>
+
+  <!-- TODAY -->
+  <section id="view-today" class="view" aria-label="Today">
+    <div class="card" id="setupCard">
+      <h3>How much time do you have?</h3>
+      <div class="chips" id="minuteChips" role="group" aria-label="Session length"></div>
+      <div id="comebackBanner" class="banner hidden"></div>
+      <div id="planWarn" class="banner info hidden"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="spread"><h2 id="planTitle">Today's session</h2><span class="pill brass mono" id="planTotal">30 min</span></div>
+      <div class="blocks" id="planBlocks"></div>
+    </div>
+    <div class="card accent" style="margin-top:16px" id="timerCard">
+      <div class="spread"><h3 id="timerLabel">Ready when you are</h3><span class="sub" id="timerStep"></span></div>
+      <div class="timer" id="timerDisplay">00:00</div>
+      <div class="row" style="justify-content:center">
+        <button class="btn primary" id="startBtn">Start session</button>
+        <button class="btn" id="nextBtn" disabled>Next block</button>
+        <button class="btn ghost" id="finishBtn" disabled>Finish &amp; log</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SONGS -->
+  <section id="view-songs" class="view hidden" aria-label="Songs">
+    <div class="card">
+      <div class="spread"><h2>Songs</h2><button class="btn small primary" id="addSongBtn">Add song</button></div>
+      <div class="sub" id="activeLine"></div>
+      <div class="chips" id="songFilters" role="group" aria-label="Filter songs"></div>
+    </div>
+    <div class="card accent hidden" id="starterCard" style="margin-top:12px">
+      <h3>Start with your library</h3>
+      <div class="sub">Load the 29 songs from your plan: 7 you can play through, 17 partly learned, 5 to learn.</div>
+      <button class="btn primary" id="starterBtn">Load my song library</button>
+    </div>
+    <div class="list" id="songList" style="margin-top:12px"></div>
+  </section>
+
+  <!-- METRONOME -->
+  <section id="view-metro" class="view hidden" aria-label="Metronome">
+    <div class="card">
+      <div class="bpm" id="bpmDisplay">80</div>
+      <div class="sub" style="text-align:center">beats per minute</div>
+      <div class="beats" id="beatDots"></div>
+      <input type="range" id="bpmRange" min="40" max="200" value="80" aria-label="Tempo">
+      <div class="row" style="justify-content:center">
+        <button class="btn small" data-bpm="-5">−5</button>
+        <button class="btn small" data-bpm="-1">−1</button>
+        <button class="btn small" data-bpm="1">+1</button>
+        <button class="btn small" data-bpm="5">+5</button>
+        <button class="btn small" id="tapBtn">Tap</button>
+      </div>
+      <div class="row" style="justify-content:center">
+        <label style="flex-direction:row;align-items:center;gap:8px">Beats
+          <select id="beatsSel" style="width:auto"><option>2</option><option>3</option><option selected>4</option><option>6</option></select>
+        </label>
+        <button class="btn primary" id="metroBtn" style="min-width:120px">Start</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Log this tempo</h3>
+      <div class="sub">Clean at this speed? Save it against the song's hard part.</div>
+      <div class="row">
+        <select id="tempoSong" style="flex:1" aria-label="Song"></select>
+        <button class="btn" id="saveTempoBtn">Save tempo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section id="view-progress" class="view hidden" aria-label="Progress">
+    <div class="card">
+      <h3>Goal: play &amp; sing with friends</h3>
+      <div class="stats">
+        <div class="stat"><b id="stJam">0/10</b><span>jam-ready</span></div>
+        <div class="stat"><b id="stSing">0</b><span>can sing</span></div>
+        <div class="stat"><b id="stKnown">0</b><span>play through</span></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="stStreak">0</b><span>day streak</span></div>
+        <div class="stat"><b id="stWeek">0</b><span>min this week</span></div>
+        <div class="stat"><b id="stSessions">0</b><span>sessions</span></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Last 7 days</h3>
+      <div class="bars" id="bars"></div>
+      <div class="barlabels" id="barLabels"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Benchmarks</h3>
+      <div class="sub">Re-test monthly. Chord changes = clean switches in one minute.</div>
+      <div class="grid2">
+        <label for="bmType">Test
+          <select id="bmType">
+            <option>G ↔ C changes/min</option>
+            <option>C ↔ D changes/min</option>
+            <option>G ↔ Em changes/min</option>
+            <option>D ↔ A changes/min</option>
+            <option>Clean strum BPM</option>
+            <option>Travis picking BPM</option>
+          </select>
+        </label>
+        <label for="bmVal">Result<input type="number" id="bmVal" inputmode="numeric" min="0"></label>
+      </div>
+      <button class="btn" id="saveBmBtn">Save result</button>
+      <div class="list" id="bmList"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Recent sessions</h3>
+      <div class="list" id="sessionList"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Plan start date</h3>
+      <div class="sub">Phases count from this date.</div>
+      <div class="row"><input type="text" id="startDate" placeholder="YYYY-MM-DD" inputmode="numeric" style="flex:1"><button class="btn small" id="saveStart">Save</button></div>
+    </div>
+<div class="card" style="margin-top:16px">
+      <h3>Account</h3>
+      <div class="sub" id="acctEmail"></div>
+      <button class="btn small ghost" id="signOutBtn">Sign out</button>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="Sections"><div class="inner">
+  <button data-view="today" aria-current="page">Today</button>
+  <button data-view="songs">Songs</button>
+  <button data-view="metro">Metronome</button>
+  <button data-view="progress">Progress</button>
+</div></nav>
+
+<!-- song editor -->
+<div class="sheet-bg" id="songSheet" role="dialog" aria-modal="true" aria-labelledby="songSheetTitle">
+  <div class="sheet">
+    <div class="spread"><h2 id="songSheetTitle">Song</h2><button class="btn small ghost" data-close>Close</button></div>
+    <div class="grid2">
+      <label for="fTitle">Title<input type="text" id="fTitle"></label>
+      <label for="fArtist">Artist<input type="text" id="fArtist"></label>
+    </div>
+    <label for="fStatus">Status
+      <select id="fStatus">
+        <option value="want">Want to learn</option>
+        <option value="partial">Partly learned (parked)</option>
+        <option value="learning">Learning (active)</option>
+        <option value="polishing">Polishing (active)</option>
+        <option value="known">Can play through</option>
+      </select>
+    </label>
+    <div id="capWarn" class="banner hidden"></div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="fSing"> I can sing it while playing</label>
+      <label class="check"><input type="checkbox" id="fJam"> Jam-ready</label>
+    </div>
+    <label for="fHard">Hard part (what trips you up)<input type="text" id="fHard" placeholder="e.g. intro picking pattern, bar 3–4"></label>
+    <div class="grid2">
+      <label for="fTempo">Current clean BPM<input type="number" id="fTempo" inputmode="numeric"></label>
+      <label for="fTarget">Song BPM (target)<input type="number" id="fTarget" inputmode="numeric"></label>
+    </div>
+    <label for="fCapo">Capo / key<input type="text" id="fCapo" placeholder="e.g. capo 2, G shapes = key of A"></label>
+    <label for="fMap">Song map (sections and Nashville numbers)<textarea id="fMap" placeholder="Intro: 1 – 4 – 1 – 5&#10;Verse: 1 – 6m – 4 – 1&#10;Chorus: 4 – 1 – 5 – 6m"></textarea></label>
+    <label for="fNotes">Notes<textarea id="fNotes"></textarea></label>
+    <div class="row" id="songLinks"></div>
+    <div class="sub" id="tempoHistory"></div>
+    <div class="spread">
+      <button class="btn ghost small" id="delSongBtn" style="color:var(--rust)">Delete song</button>
+      <button class="btn primary" id="saveSongBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- session log -->
+<div class="sheet-bg" id="logSheet" role="dialog" aria-modal="true" aria-labelledby="logTitle">
+  <div class="sheet">
+    <div class="spread"><h2 id="logTitle">Log this session</h2><button class="btn small ghost" data-close>Close</button></div>
+    <div class="sub" id="logSummary"></div>
+    <label for="lFeel">How did it feel?
+      <select id="lFeel"><option value="5">5 · Great, things clicked</option><option value="4">4 · Good</option><option value="3" selected>3 · Okay</option><option value="2">2 · Rough</option><option value="1">1 · Frustrating</option></select>
+    </label>
+    <div id="lActive" class="card hidden" style="padding:12px">
+      <div class="t" id="lActiveName" style="font-weight:600"></div>
+      <label for="lTempo">Hard part clean at (BPM)<input type="number" id="lTempo" inputmode="numeric"></label>
+      <label class="check"><input type="checkbox" id="lThrough"> Got through the whole song (even simplified)</label>
+    </div>
+    <label for="lNotes">What felt hard, what clicked<textarea id="lNotes"></textarea></label>
+    <button class="btn primary" id="saveLogBtn">Save session</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
