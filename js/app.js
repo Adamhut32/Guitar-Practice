@@ -24,8 +24,8 @@ function cacheKey(){ return "gp-cache-"+(user?user.id:"anon"); }
 function saveLocal(){ try{ localStorage.setItem(cacheKey(), JSON.stringify({state, sessions, outbox, synced})); }catch(e){} }
 function loadLocal(){ try{ const raw=localStorage.getItem(cacheKey()); if(raw){ const o=JSON.parse(raw); if(o.state) state=Object.assign({startDate:todayStr(),songs:[],benchmarks:[]},o.state); sessions=o.sessions||[]; outbox=o.outbox||[]; synced=o.synced||synced; return true; } }catch(e){} return false; }
 
-const songToRow = s => ({ id:s.id, user_id:user.id, title:s.title, artist:s.artist||null, status:s.status, sing:!!s.sing, jam:!!s.jam, hard_part:s.hardPart||null, tempo:s.tempo||null, target:s.target||null, capo:s.capo||null, song_map:s.map||null, notes:s.notes||null, tempo_log:s.tempoLog||[], last_played:s.lastPlayed||null, updated_at:new Date().toISOString() });
-const rowToSong = r => ({ id:r.id, title:r.title, artist:r.artist||"", status:r.status, sing:r.sing, jam:r.jam, hardPart:r.hard_part||"", tempo:r.tempo, target:r.target, capo:r.capo||"", map:r.song_map||"", notes:r.notes||"", tempoLog:r.tempo_log||[], lastPlayed:r.last_played });
+const songToRow = s => ({ id:s.id, user_id:user.id, title:s.title, artist:s.artist||null, status:s.status, sing:!!s.sing, jam:!!s.jam, hard_part:s.hardPart||null, tempo:s.tempo||null, target:s.target||null, capo:s.capo||null, song_map:s.map||null, notes:s.notes||null, tempo_log:s.tempoLog||[], last_played:s.lastPlayed||null, lesson_progress:s.lessonProgress||{}, updated_at:new Date().toISOString() });
+const rowToSong = r => ({ id:r.id, title:r.title, artist:r.artist||"", status:r.status, sing:r.sing, jam:r.jam, hardPart:r.hard_part||"", tempo:r.tempo, target:r.target, capo:r.capo||"", map:r.song_map||"", notes:r.notes||"", tempoLog:r.tempo_log||[], lastPlayed:r.last_played, lesson:r.lesson||null, lessonProgress:r.lesson_progress||{} });
 const sessToRow = s => ({ id:s.id, user_id:user.id, played_on:s.date, created_at:new Date(s.ts).toISOString(), minutes:s.minutes, planned:s.planned, feel:s.feel, notes:s.notes||null, songs:s.songs||[], hard_part_bpm:s.hardPartBpm||null, got_through:s.gotThrough||null, phase:s.phase, week:s.week });
 const rowToSess = r => ({ id:r.id, date:r.played_on, ts:Date.parse(r.created_at), minutes:r.minutes, planned:r.planned, feel:r.feel, notes:r.notes||"", songs:r.songs||[], hardPartBpm:r.hard_part_bpm, gotThrough:r.got_through, phase:r.phase, week:r.week });
 const benchToRow = b => ({ id:b.id, user_id:user.id, test:b.type, value:b.value, tested_on:b.d });
@@ -43,7 +43,8 @@ function diffState(){
   state.songs.forEach(s=>{ if(!s.id || s.id.length<30) s.id=uid(); const j=sig(s); seen[s.id]=1; if(synced.songs[s.id]!==j){ enqueue({t:"songs",op:"upsert",id:s.id,row:songToRow(s)}); synced.songs[s.id]=j; } });
   Object.keys(synced.songs).forEach(id=>{ if(!seen[id]){ enqueue({t:"songs",op:"delete",id}); delete synced.songs[id]; } });
   (state.benchmarks||[]).forEach(b=>{ if(!b.id) b.id=uid(); const j=sig(b); if(synced.bench[b.id]!==j){ enqueue({t:"benchmarks",op:"upsert",id:b.id,row:benchToRow(b)}); synced.bench[b.id]=j; } });
-  if(synced.settings!==state.startDate){ enqueue({t:"settings",op:"upsert",id:user.id,row:{user_id:user.id,start_date:state.startDate,updated_at:new Date().toISOString()}}); synced.settings=state.startDate; }
+  const setSig = sig({d:state.startDate, p:state.theoryProgress||{}});
+  if(synced.settings!==setSig){ enqueue({t:"settings",op:"upsert",id:user.id,row:{user_id:user.id,start_date:state.startDate,lesson_progress:state.theoryProgress||{},updated_at:new Date().toISOString()}}); synced.settings=setSig; }
 }
 function persist(){ if(!user) return; diffState(); saveLocal(); flush(); }
 async function persistSession(s){ if(!user) return; enqueue({t:"sessions",op:"upsert",id:s.id,row:sessToRow(s)}); saveLocal(); flush(); }
@@ -71,7 +72,7 @@ async function loadRemote(){
   await flush();
   if(outbox.length) return; // keep the local copy until queued changes are saved
   const [st, so, se, be] = await Promise.all([
-    sb.from("settings").select("start_date").maybeSingle(),
+    sb.from("settings").select("start_date, lesson_progress").maybeSingle(),
     sb.from("songs").select("*").order("created_at"),
     sb.from("sessions").select("*").order("created_at"),
     sb.from("benchmarks").select("*").order("tested_on")
@@ -84,7 +85,7 @@ async function loadRemote(){
   synced = { songs:{}, bench:{}, settings:null };
   state.songs.forEach(s=>synced.songs[s.id]=sig(s));
   state.benchmarks.forEach(b=>synced.bench[b.id]=sig(b));
-  if(st.data && st.data.start_date){ state.startDate = st.data.start_date; synced.settings = state.startDate; }
+  if(st.data && st.data.start_date){ state.startDate = st.data.start_date; state.theoryProgress = st.data.lesson_progress||{}; synced.settings = sig({d:state.startDate, p:state.theoryProgress}); }
   else { state.startDate = todayStr(); }
   saveLocal(); persist(); renderAll(); setSync("Synced");
 }
@@ -128,10 +129,11 @@ async function boot(u){
   if(user && user.id===u.id) return;
   user = u; $("acctEmail").textContent = "Signed in as "+(u.email||"");
   state = { startDate: todayStr(), songs: [], benchmarks: [] }; sessions=[]; outbox=[]; synced={songs:{},bench:{},settings:null};
-  loadLocal(); showApp(); renderAll(); setSync(navigator.onLine===false?"Offline":"Loading…");
+  loadLocal(); showApp(); renderAll(); restoreRun(); setSync(navigator.onLine===false?"Offline":"Loading…");
   try{ await loadRemote(); }catch(e){ setSync("Offline copy", true); }
 }
 async function init(){
+  loadSongLessons().then(()=>renderAll());
   sb.auth.onAuthStateChange((evt, session)=>{
     if(session && session.user) boot(session.user);
     else if(evt==="SIGNED_OUT"){ user=null; showAuth(); }
@@ -198,7 +200,13 @@ function buildPlan(minutes){
       if(comeback) blocks.push({kind,min,name:"Easy songs you know",tip:"Coming back from a break. Play known songs loosely to get your hands back."});
       else blocks.push({kind,min,name:"Technique",tip:pick(CONTENT.tech[ph],i)});
     }
-    else if(kind==="mind") blocks.push({kind,min,name: ph===1?"Theory & voice":"Theory · ear · voice",tip:pick(CONTENT.mind[ph],i)});
+    else if(kind==="mind"){
+      const pol = state.songs.find(s=>s.status==="polishing");
+      const dayOdd = Math.floor(Date.now()/86400000)%2===1;
+      const nx = nextTheory(pol && !pol.sing && dayOdd ? "sing" : "keys");
+      if(nx) blocks.push({kind,min,name:"Lesson: "+nx.title,tip:nx.unitTitle+". Read it, play the examples, and take the quick check at the end.",lessonId:nx.id});
+      else blocks.push({kind,min,name: ph===1?"Theory & voice":"Theory · ear · voice",tip:pick(CONTENT.mind[ph],i)});
+    }
     else if(kind==="free") blocks.push({kind,min,name:"Free play",tip:CONTENT.free[0]});
     else if(kind==="songs"){
       const parts = [];
@@ -240,7 +248,7 @@ let plan = null, run = null, tick = null;
 function renderToday(){
   const chips = $("minuteChips");
   chips.innerHTML = [5,20,30,45,60].map(m=>`<button class="chip" data-min="${m}" aria-pressed="${m===chosenMinutes}">${m===5?"5 min (minimum)":m+" min"}</button>`).join("");
-  if(run) return; // keep live plan steady while a session runs
+  if(run){ drawBlocks(run.done?plan.blocks.length:run.i); return; } // keep live plan steady while a session runs
   plan = buildPlan(chosenMinutes);
   const cb = $("comebackBanner");
   if(plan.comeback){ cb.textContent = "It's been "+plan.gap+" days. Today starts with songs you know. Welcome back."; cb.classList.remove("hidden"); } else cb.classList.add("hidden");
@@ -254,33 +262,115 @@ function renderToday(){
   $("timerDisplay").textContent = fmt(plan.blocks[0]?plan.blocks[0].min*60:0);
 }
 function drawBlocks(cur){
-  $("planBlocks").innerHTML = plan.blocks.map((b,i)=>`<div class="block ${i===cur?"now":""} ${cur>-1&&i<cur?"done":""}"><div class="min">${b.min}<small>min</small></div><div><div class="name">${esc(b.name)}</div><div class="tip">${esc(b.tip)}</div>${b.songId&&(b.role==="learning"||b.role==="peek")?`<button class="btn small ghost" data-metro-song="${b.songId}" style="margin-top:6px">Metronome at hard-part tempo</button>`:""}</div></div>`).join("");
+  $("planBlocks").innerHTML = plan.blocks.map((b,i)=>{
+    let extra = "";
+    if(b.songId){ const s = state.songs.find(x=>x.id===b.songId); const L = s && lessonFor(s);
+      if(L){ const nx = nextStep(s, L); extra += nx ? `<div class="nextstep">Next step: ${esc(nx.title)}</div>` : `<div class="nextstep">All lesson steps done</div>`; extra += `<button class="btn small" data-lesson-song="${b.songId}">Open lesson</button>`; }
+      else if(b.role==="learning"||b.role==="peek") extra += `<button class="btn small ghost" data-metro-song="${b.songId}">Metronome at hard-part tempo</button>`;
+    }
+    if(b.lessonId) extra += `<button class="btn small" data-theory="${b.lessonId}">Open lesson</button>`;
+    return `<div class="block ${i===cur?"now":""} ${cur>-1&&i<cur?"done":""}"><div class="min">${b.min}<small>min</small></div><div><div class="name">${esc(b.name)}</div><div class="tip">${esc(b.tip)}</div>${extra?`<div class="row" style="margin-top:8px">${extra}</div>`:""}</div></div>`;
+  }).join("");
 }
 function fmt(sec){ sec=Math.max(0,Math.round(sec)); return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
+
+/* The timer runs on the real clock: block end times are stored, so leaving the app
+   (or the phone locking) doesn't stop it. When you come back it catches up. */
+const RUN_KEY = "gp-run";
+function saveRun(){ try{ if(run) localStorage.setItem(RUN_KEY, JSON.stringify({run, plan, chosenMinutes})); else localStorage.removeItem(RUN_KEY); }catch(e){} }
+function restoreRun(){
+  try{ const o = JSON.parse(localStorage.getItem(RUN_KEY)||"null"); if(!o||!o.run) return;
+    if(Date.now() - o.run.startedAt > 4*3600*1000){ localStorage.removeItem(RUN_KEY); return; }
+    run = o.run; plan = o.plan; chosenMinutes = o.chosenMinutes||chosenMinutes;
+    $("nextBtn").disabled=false; $("finishBtn").disabled=false; $("startBtn").textContent = run.paused?"Resume":"Pause";
+    clearInterval(tick); tick=setInterval(step,500); step(true);
+  }catch(e){}
+}
 function startRun(){
   if(!plan||!plan.blocks.length) return;
-  run = {i:0, left:plan.blocks[0].min*60, startedAt:Date.now(), paused:false};
+  const now = Date.now();
+  run = {i:0, startedAt:now, blockEnd: now + plan.blocks[0].min*60000, paused:false, pausedLeft:0, done:false};
   $("startBtn").textContent="Pause"; $("nextBtn").disabled=false; $("finishBtn").disabled=false;
-  showBlock(); clearInterval(tick); tick=setInterval(step,1000);
+  saveRun(); step(true); clearInterval(tick); tick=setInterval(step,500);
+  scheduleAlerts();
 }
-function showBlock(){ const b=plan.blocks[run.i]; $("timerLabel").textContent=b.name; $("timerStep").textContent="Block "+(run.i+1)+" of "+plan.blocks.length; $("timerDisplay").textContent=fmt(run.left); drawBlocks(run.i); }
-function step(){
-  if(!run||run.paused) return;
-  run.left--; $("timerDisplay").textContent=fmt(run.left);
-  if(run.left<=0){ chime(); nextBlock(); }
+function remaining(){ return run.paused ? run.pausedLeft : Math.max(0, run.blockEnd - Date.now()); }
+function showBlock(){ const b=plan.blocks[run.i]; $("timerLabel").textContent=b.name; $("timerStep").textContent="Block "+(run.i+1)+" of "+plan.blocks.length+(run.paused?" · paused":""); $("timerDisplay").textContent=fmt(remaining()/1000); drawBlocks(run.i); }
+function step(force){
+  if(!run || run.done) return;
+  if(run.paused){ if(force) showBlock(); return; }
+  let moved = false;
+  while(Date.now() >= run.blockEnd){
+    if(run.i < plan.blocks.length-1){ run.i++; run.blockEnd += plan.blocks[run.i].min*60000; moved = true; }
+    else { finishRun(); return; }
+  }
+  if(moved){ if(document.visibilityState==="visible") chime(); saveRun(); showBlock(); }
+  else if(force) showBlock();
+  else $("timerDisplay").textContent = fmt(remaining()/1000);
 }
+function finishRun(){ run.done = true; saveRun(); $("startBtn").textContent="Log session"; $("timerDisplay").textContent="Done"; $("timerLabel").textContent="Session complete"; drawBlocks(plan.blocks.length); clearInterval(tick); if(document.visibilityState==="visible") chime(); openLog(); }
 function nextBlock(){
   if(!run) return;
-  if(run.i < plan.blocks.length-1){ run.i++; run.left=plan.blocks[run.i].min*60; showBlock(); }
-  else { run.left=0; $("timerDisplay").textContent="Done"; $("timerLabel").textContent="Session complete"; clearInterval(tick); openLog(); }
+  if(run.i < plan.blocks.length-1){ run.i++; const ms = plan.blocks[run.i].min*60000; if(run.paused) run.pausedLeft = ms; else run.blockEnd = Date.now()+ms; saveRun(); showBlock(); if(!run.paused) scheduleAlerts(); }
+  else { cancelAlerts(); finishRun(); }
 }
-function togglePause(){ if(!run){ startRun(); return; } run.paused=!run.paused; $("startBtn").textContent=run.paused?"Resume":"Pause"; }
+function togglePause(){
+  if(!run){ startRun(); return; }
+  if(run.done){ openLog(); return; }
+  if(!run.paused){ run.pausedLeft = remaining(); run.paused = true; cancelAlerts(); }
+  else { run.blockEnd = Date.now() + run.pausedLeft; run.paused = false; scheduleAlerts(); }
+  $("startBtn").textContent = run.paused?"Resume":"Pause"; saveRun(); showBlock();
+}
+function clearRun(){ clearInterval(tick); run=null; saveRun(); $("startBtn").textContent="Start session"; $("nextBtn").disabled=true; $("finishBtn").disabled=true; $("timerLabel").textContent="Ready when you are"; $("timerStep").textContent=""; }
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && run) step(true); });
+
+/* ---------- block-end alerts (push notifications) ---------- */
+const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const isiOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function b64u(s){ const p="=".repeat((4-s.length%4)%4); const b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from([...b].map(c=>c.charCodeAt(0))); }
+function alertsOn(){ try{ return localStorage.getItem("gp-alerts")==="1" && Notification.permission==="granted"; }catch(e){ return false; } }
+function renderAlertsRow(){
+  const el = $("alertsRow"); if(!el) return;
+  if(alertsOn()){ el.innerHTML = `<span class="pill sage">Block alerts on</span>`; return; }
+  if(isiOS() && !isStandalone()){ el.innerHTML = `<div class="sub">To get an alert when each block ends, add this app to your Home Screen (Share → Add to Home Screen) and open it from there.</div>`; return; }
+  if(!pushSupported()){ el.innerHTML = `<div class="sub">This browser can't show block alerts. The timer still keeps time while you're away.</div>`; return; }
+  if(Notification.permission==="denied"){ el.innerHTML = `<div class="sub">Notifications are blocked for this app. Turn them on in your phone's Settings to get block alerts.</div>`; return; }
+  el.innerHTML = `<button class="btn small" id="alertsBtn">Turn on block alerts</button><span class="sub">Your phone buzzes when each block ends, even with the app closed.</span>`;
+  $("alertsBtn").onclick = enableAlerts;
+}
+async function enableAlerts(){
+  try{
+    const perm = await Notification.requestPermission(); if(perm!=="granted"){ renderAlertsRow(); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64u(CFG.vapidPublic) });
+    const j = sub.toJSON();
+    const { error } = await sb.from("push_subscriptions").upsert({ user_id:user.id, endpoint:j.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth }, { onConflict:"endpoint" });
+    if(error) throw error;
+    localStorage.setItem("gp-alerts","1"); toast("Block alerts on"); renderAlertsRow();
+    if(run && !run.paused) scheduleAlerts();
+  }catch(e){ console.warn("[practice] alerts", e); toast("Couldn't turn on alerts. Try again online."); }
+}
+async function cancelAlerts(){ if(!user) return; try{ await sb.from("scheduled_pushes").delete().is("sent_at", null); }catch(e){} }
+async function scheduleAlerts(){
+  if(!user || !run || run.paused || !alertsOn()) return;
+  await cancelAlerts();
+  const rows = []; let t = run.blockEnd;
+  for(let i=run.i; i<plan.blocks.length; i++){
+    if(i>run.i) t += plan.blocks[i].min*60000;
+    const next = plan.blocks[i+1];
+    rows.push({ user_id:user.id, send_at:new Date(t).toISOString(),
+      title: next ? "Next: "+next.name : "Session done",
+      body: next ? next.tip.slice(0,140) : "Nice work. Open the app to log how it went." });
+  }
+  try{ await sb.from("scheduled_pushes").insert(rows); }catch(e){}
+}
 
 /* ---------- log ---------- */
 function openLog(){
   const mins = run ? Math.max(1, Math.round((Date.now()-run.startedAt)/60000)) : chosenMinutes;
   $("logSummary").textContent = mins+" min played · "+chosenMinutes+" min planned";
-  const L = plan && plan.learning;
+  const L = plan && plan.learning && state.songs.find(z=>z.id===plan.learning.id);
   $("lActive").classList.toggle("hidden", !L);
   if(L){ $("lActiveName").textContent = "Learning: "+L.title+(L.hardPart?" · "+L.hardPart:""); $("lTempo").value = L.tempo||""; $("lThrough").checked=false; }
   $("lNotes").value=""; $("lFeel").value="3";
@@ -290,7 +380,7 @@ async function saveLog(){
   const mins = run ? Math.max(1, Math.round((Date.now()-run.startedAt)/60000)) : chosenMinutes;
   const songIds = plan ? plan.blocks.filter(b=>b.songId).map(b=>b.songId) : [];
   const s = { id: uid(), ts: Date.now(), date: todayStr(), minutes: mins, planned: chosenMinutes, feel: Number($("lFeel").value), notes: $("lNotes").value.trim(), songs: songIds.map(id=>{const x=state.songs.find(z=>z.id===id); return x?x.title:id;}), phase: phase(), week: weekNum() };
-  const L = plan && plan.learning;
+  const L = plan && plan.learning && state.songs.find(z=>z.id===plan.learning.id);
   if(L){
     const t = Number($("lTempo").value);
     if(t>0 && t!==L.tempo){ L.tempo=t; (L.tempoLog=L.tempoLog||[]).push({d:todayStr(),bpm:t}); s.hardPartBpm=t; }
@@ -300,13 +390,13 @@ async function saveLog(){
   sessions.push(s);
   await persistSession(s); persist();
   closeSheet("logSheet");
-  clearInterval(tick); run=null; $("startBtn").textContent="Start session"; $("nextBtn").disabled=true; $("finishBtn").disabled=true; $("timerLabel").textContent="Ready when you are"; $("timerStep").textContent="";
+  cancelAlerts(); clearRun();
   toast("Session saved");
   if(L && $("lThrough").checked){ setTimeout(()=>{ if(confirmInline("You got through "+L.title+". Move it to Polishing?")){} },0); }
   renderAll();
 }
 function confirmInline(msg){ // no native confirm in this frame: show a banner with an action
-  const w=$("planWarn"); const L = plan && plan.learning;
+  const w=$("planWarn"); const L = plan && plan.learning && state.songs.find(z=>z.id===plan.learning.id);
   w.innerHTML = esc(msg)+' <button class="btn small" id="promoteBtn" style="margin-left:6px">Move it</button>';
   w.classList.remove("hidden");
   $("promoteBtn").onclick=()=>{ const s=state.songs.find(z=>z.id===L.id); if(s){ const pol=state.songs.find(z=>z.status==="polishing"); if(pol) pol.status="known"; s.status="polishing"; persist(); toast(s.title+" moved to Polishing"); renderAll(); } };
@@ -335,7 +425,7 @@ function openSong(id){
   $("fSing").checked=!!s.sing; $("fJam").checked=!!s.jam; $("fHard").value=s.hardPart||""; $("fTempo").value=s.tempo||""; $("fTarget").value=s.target||"";
   $("fCapo").value=s.capo||""; $("fMap").value=s.map||""; $("fNotes").value=s.notes||"";
   const q = encodeURIComponent(((s.artist||"")+" "+(s.title||"")).trim());
-  $("songLinks").innerHTML = s.title ? `<a class="btn small" href="https://www.ultimate-guitar.com/search.php?search_type=title&value=${q}" target="_blank" rel="noopener">Find tab on Ultimate Guitar</a><a class="btn small" href="https://music.apple.com/us/search?term=${q}" target="_blank" rel="noopener">Open in Apple Music</a>` : "";
+  $("songLinks").innerHTML = (editing ? `<button class="btn small primary" data-open-lesson="${editing.id}">${lessonFor(editing)?"Open lesson":"Lesson"}</button>` : "") + (s.title ? `<a class="btn small" href="https://www.ultimate-guitar.com/search.php?search_type=title&value=${q}" target="_blank" rel="noopener">Find tab on Ultimate Guitar</a><a class="btn small" href="https://music.apple.com/us/search?term=${q}" target="_blank" rel="noopener">Open in Apple Music</a>` : "");
   const tl = (s.tempoLog||[]).slice(-6);
   $("tempoHistory").textContent = tl.length ? "Hard-part tempo: " + tl.map(x=>x.bpm).join(" → ") + " BPM" : "";
   $("delSongBtn").classList.toggle("hidden", !editing);
@@ -423,10 +513,124 @@ function renderProgress(){
   $("startDate").value = state.startDate||"";
 }
 
+
+/* ---------- lessons ---------- */
+let SONG_LESSONS = {};
+async function loadSongLessons(){ try{ const r = await fetch("data/song-lessons.json"); SONG_LESSONS = await r.json(); }catch(e){} }
+function lessonFor(s){ return s && (s.lesson || SONG_LESSONS[(s.title||"").toLowerCase()]) || null; }
+function nextStep(s, L){ const done = (s.lessonProgress||{}).steps||{}; return (L.steps||[]).find(x=>!done[x.id])||null; }
+function theoryDone(id){ return !!((state.theoryProgress||{})[id]); }
+function allTheory(){ const out=[]; (window.THEORY||[]).forEach(u=>u.lessons.forEach(l=>out.push(Object.assign({unit:u.id, unitTitle:u.title}, l)))); return out; }
+function nextTheory(preferUnit){
+  const all = allTheory();
+  if(preferUnit){ const x = all.find(l=>l.unit===preferUnit && !theoryDone(l.id)); if(x) return x; }
+  return all.find(l=>!theoryDone(l.id)) || null;
+}
+
+// song lesson sheet
+let lessonSong = null;
+function chordGrid(chords, key){
+  return `<div class="chordgrid">${chords.map(c=>`<button class="chordbox" data-strum="${esc(c)}" aria-label="Hear ${esc(c)}">${Music.chordSVG(c)}<b>${esc(c)}</b>${key&&Music.chordNumber(c,key)?`<span class="num">${Music.chordNumber(c,key)}</span>`:""}</button>`).join("")}</div>`;
+}
+function openSongLesson(id){
+  const s = state.songs.find(x=>x.id===id); const L = lessonFor(s); if(!s) return;
+  lessonSong = s;
+  const done = (s.lessonProgress||{}).steps||{};
+  const box = $("lessonBody");
+  if(!L){
+    box.innerHTML = `<h2>${esc(s.title)}</h2><div class="sub">No lesson written for this song yet. Ask Claude in your Guitar Practice project to "write a lesson for ${esc(s.title)}".</div>`+songLinks(s);
+    openSheet("lessonSheet"); return;
+  }
+  const doneCount = (L.steps||[]).filter(x=>done[x.id]).length;
+  const nums = L.chords.map(c=>Music.chordNumber(c,L.key)).filter(Boolean);
+  box.innerHTML = `
+    <div><h2>${esc(s.title)}</h2><div class="sub">${esc(s.artist||"")} · Key of ${esc(L.key)} · Capo: ${esc(L.capo)}</div></div>
+    <div class="card"><h3>Chords</h3><div class="sub">Tap a chord to hear it. Small numbers on the dots are which finger to use (1 = index). In the key of ${esc(L.key)} these are the ${nums.join(", ")} chords.</div>${chordGrid(L.chords, L.key)}</div>
+    <div class="card"><h3>Steps · ${doneCount} of ${L.steps.length} done</h3>
+      <div class="steps">${L.steps.map((st,i)=>`<label class="stepitem ${done[st.id]?"isdone":""}"><input type="checkbox" data-step="${st.id}" ${done[st.id]?"checked":""}><div><b>${i+1}. ${esc(st.title)}</b><div class="sub">${esc(st.detail)}</div></div></label>`).join("")}</div></div>
+    ${L.hard?`<div class="card accent"><h3>Hard part</h3><b>${esc(L.hard.title)}</b><div class="sub">${esc(L.hard.why)}</div>${seqPlayer("hard", L.hard.chords, L.hard.startBpm, L.key)}</div>`:""}
+    <div class="card"><h3>Strum patterns</h3>${L.strums.map((p,i)=>`<div class="strum"><b>${esc(p.name)}</b><div class="pattern">${patternHTML(p.pattern)}</div><div class="sub">${esc(p.note)}</div><button class="btn small" data-pattern="${i}">Hear it on G</button></div>`).join("")}</div>
+    <div class="card"><h3>Song sections</h3><div class="sub">The player gives each chord one bar so you can practice the changes. The recording moves some chords faster.</div>
+      ${L.sections.map((sec,i)=>`<div class="section"><div class="spread"><b>${esc(sec.name)}</b>${sec.repeat?`<span class="sub">${esc(sec.repeat)}</span>`:""}</div>${seqPlayer("sec"+i, sec.chords, 60, L.key)}</div>`).join("")}
+    </div>
+    ${songLinks(s, L)}`;
+  openSheet("lessonSheet");
+}
+function patternHTML(p){ const counts=["1","&","2","&","3","&","4","&"]; return p.split("").map((c,i)=>`<span class="slot ${c==="-"?"rest":""}"><i>${counts[i]}</i>${c==="-"?"·":c}</span>`).join(""); }
+function seqPlayer(id, chords, bpm, key){
+  return `<div class="seq" data-seq="${id}" data-chords="${esc(chords.join(","))}">
+    <div class="seqchords">${chords.map((c,i)=>`<span class="sc" data-i="${i}">${esc(c)}${key&&Music.chordNumber(c,key)?`<small>${Music.chordNumber(c,key)}</small>`:""}</span>`).join("")}</div>
+    <div class="row"><button class="btn small primary" data-play-seq="${id}">Play</button>
+    <label class="row" style="flex-direction:row;align-items:center;gap:6px">BPM <input type="number" class="bpmin" value="${bpm}" min="40" max="160" style="width:80px"></label>
+    <label class="check" style="font-size:14px"><input type="checkbox" class="loopin"> Loop</label></div></div>`;
+}
+function songLinks(s, L){
+  const q = encodeURIComponent(((s.artist||"")+" "+(s.title||"")).trim());
+  return `<div class="row">${L&&L.tab?`<a class="btn small" href="${esc(L.tab)}" target="_blank" rel="noopener">Full chord chart (Ultimate Guitar)</a>`:`<a class="btn small" href="https://www.ultimate-guitar.com/search.php?search_type=title&value=${q}" target="_blank" rel="noopener">Find tab</a>`}${L&&L.video?`<a class="btn small" href="${esc(L.video)}" target="_blank" rel="noopener">Video lesson</a>`:""}<a class="btn small" href="https://music.apple.com/us/search?term=${q}" target="_blank" rel="noopener">Apple Music</a></div>`;
+}
+let playingSeq = null;
+function playSeq(id){
+  const el = document.querySelector(`[data-seq="${id}"]`); if(!el) return;
+  if(playingSeq===id){ Music.stop(); return; }
+  Music.stop();
+  const chords = el.dataset.chords.split(","); const bpm = Number(el.querySelector(".bpmin").value)||60; const loop = el.querySelector(".loopin").checked;
+  const btn = el.querySelector("[data-play-seq]"); playingSeq = id; btn.textContent = "Stop";
+  const pattern = el.closest("#lessonBody") ? "D-D-D-D-" : "D-D-D-D-";
+  const go = () => Music.playSequence(chords.map(c=>({chord:c, pattern})), bpm, { click:true,
+    onStep:i=>{ el.querySelectorAll(".sc").forEach((x,j)=>x.classList.toggle("on", j===i)); },
+    onEnd:()=>{ el.querySelectorAll(".sc").forEach(x=>x.classList.remove("on")); if(playingSeq===id && loop && el.querySelector(".loopin").checked && document.body.contains(el)){ setTimeout(()=>{ if(playingSeq===id) go(); }, 30); } else { if(playingSeq===id){ playingSeq=null; btn.textContent="Play"; } } } });
+  go();
+}
+function stopSeq(){ const id = playingSeq; playingSeq = null; Music.stop(); if(id){ const el=document.querySelector(`[data-seq="${id}"] [data-play-seq]`); if(el) el.textContent="Play"; } }
+
+// Learn tab
+function renderLearn(){
+  const box = $("learnUnits"); if(!box) return;
+  const nx = nextTheory();
+  $("learnNext").innerHTML = nx ? `<div class="sub">Up next</div><b>${esc(nx.title)}</b><div class="sub">${esc(nx.unitTitle)} · about ${nx.minutes} min</div><button class="btn primary" data-theory="${nx.id}">Start lesson</button>` : `<b>You've finished every lesson so far.</b><div class="sub">Ask Claude for the next unit.</div>`;
+  box.innerHTML = (window.THEORY||[]).map(u=>{
+    const n = u.lessons.filter(l=>theoryDone(l.id)).length;
+    return `<div class="card"><div class="spread"><h2>${esc(u.title)}</h2><span class="pill ${n===u.lessons.length?"sage":""}">${n}/${u.lessons.length}</span></div><div class="sub">${esc(u.intro)}</div>
+      <div class="list">${u.lessons.map((l,i)=>`<button class="song" data-theory="${l.id}"><div><div class="t">${i+1}. ${esc(l.title)}</div><div class="a">about ${l.minutes} min</div></div>${theoryDone(l.id)?'<span class="pill sage">Done</span>':'<span class="pill">Start</span>'}</button>`).join("")}</div></div>`;
+  }).join("");
+}
+let theoryOpen = null, quizState = {};
+function openTheory(id){
+  const l = allTheory().find(x=>x.id===id); if(!l) return;
+  theoryOpen = l; quizState = {};
+  let qn = 0;
+  const html = l.body.map((b,bi)=>{
+    if(b.p) return `<p>${esc(b.p)}</p>`;
+    if(b.h) return `<h3>${esc(b.h)}</h3>`;
+    if(b.chords) return chordGrid(b.chords, null);
+    if(b.try) return `<div class="try"><b>Try it on guitar</b><div>${esc(b.try)}</div></div>`;
+    if(b.play) return `<button class="btn playbtn" data-tplay="${bi}">▶ ${esc(b.play.label)}</button>`;
+    if(b.quiz) return `<div class="quiz"><h3>Check yourself</h3>${b.quiz.map((q,qi)=>{ const key=bi+"-"+qi; qn++; return `<div class="q" data-q="${key}"><b>${esc(q.q)}</b>${q.play?`<button class="btn small" data-qplay="${key}">▶ Listen</button>`:""}<div class="opts">${q.options.map((o,oi)=>`<button class="opt" data-ans="${key}" data-oi="${oi}">${esc(o)}</button>`).join("")}</div><div class="explain sub"></div></div>`; }).join("")}</div>`;
+    return "";
+  }).join("");
+  $("theoryBody").innerHTML = `<div class="sub">${esc(l.unitTitle)}</div><h2>${esc(l.title)}</h2>${html}
+    <button class="btn primary" id="theoryDoneBtn">${theoryDone(l.id)?"Done · back to lessons":"Mark lesson done"}</button>`;
+  $("theoryDoneBtn").onclick = ()=>{ (state.theoryProgress = state.theoryProgress||{})[l.id] = todayStr(); persist(); closeSheet("theorySheet"); Music.stop(); toast("Lesson done"); renderAll(); };
+  openSheet("theorySheet");
+}
+function playTheory(spec){
+  if(!spec) return; Music.stop();
+  if(spec.kind==="scale"){ const ms = Music.scaleMidis(spec.key); Music.playSequence(ms.map(m=>({note:m, pattern:"D-"})), 100, {}); }
+  else if(spec.kind==="note"){ Music.playSequence([{note:spec.midi, pattern:"D-------"},{note:spec.midi, pattern:"D-------"}], 60, {}); }
+  else if(spec.kind==="chords"){ Music.playSequence(spec.chords.map(c=>({chord:c, pattern:"D-D-D-D-"})), spec.bpm||80, {transpose:spec.transpose||0}); }
+}
+function answer(key, oi){
+  const [bi,qi] = key.split("-").map(Number); const q = theoryOpen.body[bi].quiz[qi];
+  const wrap = document.querySelector(`[data-q="${key}"]`);
+  wrap.querySelectorAll(".opt").forEach((b,i)=>{ b.classList.toggle("right", i===q.answer && oi===q.answer); b.classList.toggle("wrong", i===oi && oi!==q.answer); });
+  wrap.querySelector(".explain").textContent = (oi===q.answer?"Right. ":"Not quite. ") + q.explain;
+  if(oi!==q.answer) wrap.querySelector(".explain").textContent += " Try another answer if you like.";
+}
+
 /* ---------- shell ---------- */
 function renderAll(){
   $("phaseLine").textContent = "Week "+weekNum()+" · "+PHASE_NAMES[phase()];
-  renderToday(); renderSongs(); renderProgress();
+  renderToday(); renderSongs(); renderProgress(); renderLearn(); renderAlertsRow();
 }
 function show(view){
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("hidden", v.id!=="view-"+view));
@@ -444,12 +648,28 @@ document.addEventListener("click", e=>{
   else if(t.dataset.song) openSong(t.dataset.song);
   else if(t.dataset.bpm) setBpm(bpm+Number(t.dataset.bpm));
   else if(t.dataset.metroSong){ const s=state.songs.find(x=>x.id===t.dataset.metroSong); setBpm(s&&s.tempo?s.tempo:60); $("tempoSong").value=t.dataset.metroSong; show("metro"); }
-  else if(t.hasAttribute("data-close")) t.closest(".sheet-bg").classList.remove("open");
+  else if(t.dataset.lessonSong){ openSongLesson(t.dataset.lessonSong); }
+  else if(t.dataset.theory){ openTheory(t.dataset.theory); }
+  else if(t.dataset.strum){ Music.strum(t.dataset.strum, 0, "D", 0.6); }
+  else if(t.dataset.playSeq){ playSeq(t.dataset.playSeq); }
+  else if(t.dataset.pattern!=null && lessonSong){ const L=lessonFor(lessonSong); const p=L.strums[Number(t.dataset.pattern)]; Music.playSequence([{chord:"G",pattern:p.pattern,bars:2},{chord:"C",pattern:p.pattern,bars:1},{chord:"G",pattern:p.pattern,bars:1}], 80, {click:true}); }
+  else if(t.dataset.tplay!=null && theoryOpen){ playTheory(theoryOpen.body[Number(t.dataset.tplay)].play); }
+  else if(t.dataset.qplay && theoryOpen){ const [bi,qi]=t.dataset.qplay.split("-").map(Number); playTheory(theoryOpen.body[bi].quiz[qi].play); }
+  else if(t.dataset.ans){ answer(t.dataset.ans, Number(t.dataset.oi)); }
+  else if(t.dataset.openLesson){ closeSheet("songSheet"); openSongLesson(t.dataset.openLesson); }
+  else if(t.hasAttribute("data-close")){ const bg=t.closest(".sheet-bg"); bg.classList.remove("open"); if(bg.id==="lessonSheet"||bg.id==="theorySheet"){ stopSeq(); } }
 });
-document.querySelectorAll(".sheet-bg").forEach(bg=>bg.addEventListener("click",e=>{ if(e.target===bg) bg.classList.remove("open"); }));
+document.addEventListener("change", e=>{
+  const c = e.target; if(c.dataset && c.dataset.step && lessonSong){
+    const lp = lessonSong.lessonProgress = lessonSong.lessonProgress||{}; lp.steps = lp.steps||{};
+    if(c.checked) lp.steps[c.dataset.step] = todayStr(); else delete lp.steps[c.dataset.step];
+    c.closest(".stepitem").classList.toggle("isdone", c.checked); persist(); renderToday();
+  }
+});
+document.querySelectorAll(".sheet-bg").forEach(bg=>bg.addEventListener("click",e=>{ if(e.target===bg){ bg.classList.remove("open"); stopSeq(); } }));
 $("startBtn").onclick=()=>{ ensureAudio(); togglePause(); };
 $("nextBtn").onclick=nextBlock;
-$("finishBtn").onclick=()=>{ if(run) run.paused=true; openLog(); };
+$("finishBtn").onclick=()=>{ if(run && !run.paused && !run.done){ run.pausedLeft=remaining(); run.paused=true; cancelAlerts(); saveRun(); $("startBtn").textContent="Resume"; } openLog(); };
 $("saveLogBtn").onclick=saveLog;
 $("addSongBtn").onclick=()=>openSong(null);
 $("saveSongBtn").onclick=saveSong;

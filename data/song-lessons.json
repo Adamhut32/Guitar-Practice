@@ -1,0 +1,326 @@
+{
+ "corinthians": {
+  "key": "G",
+  "capo": "None on the Ultimate Guitar chord chart. Check against the recording.",
+  "chords": [
+   "G",
+   "C",
+   "D",
+   "Em"
+  ],
+  "tab": "https://tabs.ultimate-guitar.com/tab/zach-bryan/corinthians-chords-4125976",
+  "video": "https://www.youtube.com/watch?v=02xDWGxEG8Y",
+  "strums": [
+   {
+    "name": "Level 1: four downstrokes",
+    "pattern": "D-D-D-D-",
+    "note": "One strum per beat. Use this while you learn the changes."
+   },
+   {
+    "name": "Level 2: down, down-up, up-down-up",
+    "pattern": "D-DU-UDU",
+    "note": "A common folk/country pattern (D \u00b7 D U \u00b7 U D U). It fits the feel; match the recording by ear once it's steady."
+   }
+  ],
+  "sections": [
+   {
+    "name": "Intro",
+    "chords": [
+     "G",
+     "G",
+     "C",
+     "G",
+     "G",
+     "G",
+     "C",
+     "G",
+     "D",
+     "G",
+     "G",
+     "C",
+     "G",
+     "Em",
+     "D",
+     "G"
+    ]
+   },
+   {
+    "name": "Verse",
+    "chords": [
+     "G",
+     "C",
+     "G",
+     "C",
+     "G",
+     "Em",
+     "D",
+     "G"
+    ],
+    "repeat": "Played twice per verse"
+   },
+   {
+    "name": "Pre-chorus",
+    "chords": [
+     "G",
+     "C",
+     "G",
+     "C",
+     "G",
+     "Em",
+     "D",
+     "G"
+    ]
+   },
+   {
+    "name": "Chorus",
+    "chords": [
+     "C",
+     "G",
+     "D",
+     "G",
+     "C",
+     "C",
+     "G",
+     "D",
+     "G",
+     "C",
+     "C",
+     "G",
+     "D",
+     "G",
+     "C",
+     "C",
+     "G",
+     "D",
+     "C"
+    ]
+   },
+   {
+    "name": "Break",
+    "chords": [
+     "G",
+     "G",
+     "C",
+     "G",
+     "G",
+     "G",
+     "C",
+     "G",
+     "D",
+     "G",
+     "G",
+     "C",
+     "G",
+     "Em",
+     "D",
+     "G"
+    ],
+    "repeat": "Same as the intro"
+   },
+   {
+    "name": "Outro",
+    "chords": [
+     "G",
+     "C",
+     "G",
+     "C",
+     "G",
+     "Em",
+     "D",
+     "G",
+     "G",
+     "C"
+    ],
+    "repeat": "Ends on G\u2013C repeated"
+   }
+  ],
+  "hard": {
+   "title": "The quick Em \u2192 D \u2192 G turnaround",
+   "chords": [
+    "Em",
+    "D",
+    "G"
+   ],
+   "why": "It ends every verse line and goes by fast. The trick is the Em\u2192D move: lift all fingers together and land the D shape as one unit.",
+   "startBpm": 50
+  },
+  "steps": [
+   {
+    "id": "c1",
+    "title": "Learn the four chords",
+    "detail": "Tap each diagram to hear it. Form the chord, then pick each string one at a time. Every string should ring clearly. Fix any buzzing before moving on."
+   },
+   {
+    "id": "c2",
+    "title": "One-minute changes: G \u2194 C",
+    "detail": "The most common change in this song. Switch back and forth for one minute, counting clean changes. Write the number in Benchmarks.",
+    "bpm": 0
+   },
+   {
+    "id": "c3",
+    "title": "Loop the turnaround: Em \u2192 D \u2192 G",
+    "detail": "Open the Hard part below and play along at 50 BPM, one strum per chord. Only speed up after 3 clean loops in a row.",
+    "bpm": 50
+   },
+   {
+    "id": "c4",
+    "title": "Verse progression with four downstrokes",
+    "detail": "Play the Verse section with the player at 60 BPM, one bar per chord, Level 1 strum. Keep your strumming hand moving even if a chord is late.",
+    "bpm": 60
+   },
+   {
+    "id": "c5",
+    "title": "Chorus progression",
+    "detail": "Same idea for the Chorus. It starts on C instead of G, which is the biggest thing to remember.",
+    "bpm": 60
+   },
+   {
+    "id": "c6",
+    "title": "Whole song, simple",
+    "detail": "Play the whole song start to finish with the recording using Level 1 strums. Don't stop for mistakes. This is the 'whole song simply first' rule, and it's how you get past the intro."
+   },
+   {
+    "id": "c7",
+    "title": "Add the Level 2 strum",
+    "detail": "Practice the Level 2 pattern on one G chord until it's automatic, then use it on the verse at 60 BPM, then the chorus."
+   },
+   {
+    "id": "c8",
+    "title": "Play along at full speed",
+    "detail": "Play the whole song with the recording using the Level 2 strum. When you get through without stopping, mark it Polishing."
+   }
+  ]
+ },
+ "shivers down spines": {
+  "key": "G",
+  "capo": "None on the Ultimate Guitar chord chart. Check against the recording.",
+  "chords": [
+   "Em",
+   "G",
+   "C",
+   "D"
+  ],
+  "tab": "https://tabs.ultimate-guitar.com/tab/zach-bryan/shivers-down-spines-chords-2834575",
+  "video": "https://www.youtube.com/watch?v=5BwQOZDNHPM",
+  "strums": [
+   {
+    "name": "Level 1: four downstrokes",
+    "pattern": "D-D-D-D-",
+    "note": "Use this when you first add singing. Simpler hands, freer voice."
+   },
+   {
+    "name": "Level 2: down, down-up, up-down-up",
+    "pattern": "D-DU-UDU",
+    "note": "A common folk/country pattern. Match the recording's feel by ear."
+   }
+  ],
+  "sections": [
+   {
+    "name": "Intro",
+    "chords": [
+     "Em",
+     "G",
+     "C",
+     "G",
+     "C",
+     "G",
+     "D"
+    ],
+    "repeat": "Twice"
+   },
+   {
+    "name": "Verse",
+    "chords": [
+     "Em",
+     "G",
+     "C",
+     "G",
+     "C",
+     "G",
+     "D"
+    ],
+    "repeat": "Four times per verse"
+   },
+   {
+    "name": "Chorus",
+    "chords": [
+     "Em",
+     "G",
+     "C",
+     "G",
+     "D"
+    ],
+    "repeat": "Twice"
+   },
+   {
+    "name": "Outro",
+    "chords": [
+     "Em",
+     "G",
+     "C",
+     "G",
+     "C",
+     "G",
+     "D"
+    ],
+    "repeat": "Twice"
+   }
+  ],
+  "hard": {
+   "title": "Singing over the verse",
+   "chords": [
+    "Em",
+    "G",
+    "C",
+    "G",
+    "C",
+    "G",
+    "D"
+   ],
+   "why": "You can already play this one. The work now is singing over it, so the guitar has to run on autopilot.",
+   "startBpm": 70
+  },
+  "steps": [
+   {
+    "id": "s1",
+    "title": "Autopilot check",
+    "detail": "Play the verse progression while counting out loud \"1, 2, 3, 4\". If counting makes your hands stumble, play it 10 more times first. Your hands need to run without your attention."
+   },
+   {
+    "id": "s2",
+    "title": "Sing it without the guitar",
+    "detail": "Sing along with the recording, no guitar. Get the melody and where each line starts."
+   },
+   {
+    "id": "s3",
+    "title": "Strum and hum",
+    "detail": "Play the verse with Level 1 strums and hum the melody. No words yet."
+   },
+   {
+    "id": "s4",
+    "title": "Strum and speak the words",
+    "detail": "Play the verse and speak the lyrics in rhythm, like talking. This trains your mouth and hands to line up."
+   },
+   {
+    "id": "s5",
+    "title": "Sing slowly",
+    "detail": "Play at a slower tempo (try 70 BPM with the metronome) and sing. Stop only if you lose the chords completely."
+   },
+   {
+    "id": "s6",
+    "title": "Chorus the same way",
+    "detail": "Repeat humming \u2192 speaking \u2192 singing for the chorus."
+   },
+   {
+    "id": "s7",
+    "title": "Whole song with the recording",
+    "detail": "Play and sing the whole song along with the recording. Use Level 2 strum once Level 1 feels easy."
+   },
+   {
+    "id": "s8",
+    "title": "Whole song on your own",
+    "detail": "Play and sing it without the recording, start to finish, without stopping. When you can, mark 'I can sing it' and Jam-ready."
+   }
+  ]
+ }
+}

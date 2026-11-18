@@ -58,6 +58,7 @@
         <button class="btn" id="nextBtn" disabled>Next block</button>
         <button class="btn ghost" id="finishBtn" disabled>Finish &amp; log</button>
       </div>
+      <div class="row" id="alertsRow"></div>
     </div>
   </section>
 
@@ -74,6 +75,12 @@
       <button class="btn primary" id="starterBtn">Load my song library</button>
     </div>
     <div class="list" id="songList" style="margin-top:12px"></div>
+  </section>
+
+  <!-- LEARN -->
+  <section id="view-learn" class="view hidden" aria-label="Learn">
+    <div class="card accent" id="learnNext"></div>
+    <div id="learnUnits" style="margin-top:16px;display:flex;flex-direction:column;gap:16px"></div>
   </section>
 
   <!-- METRONOME -->
@@ -166,6 +173,7 @@
 <nav class="tabs" aria-label="Sections"><div class="inner">
   <button data-view="today" aria-current="page">Today</button>
   <button data-view="songs">Songs</button>
+  <button data-view="learn">Learn</button>
   <button data-view="metro">Metronome</button>
   <button data-view="progress">Progress</button>
 </div></nav>
@@ -227,10 +235,28 @@
   </div>
 </div>
 
+<!-- song lesson -->
+<div class="sheet-bg" id="lessonSheet" role="dialog" aria-modal="true" aria-label="Song lesson">
+  <div class="sheet tall">
+    <div class="spread"><span class="pill brass">Song lesson</span><button class="btn small ghost" data-close>Close</button></div>
+    <div id="lessonBody" class="lessonbody"></div>
+  </div>
+</div>
+
+<!-- theory lesson -->
+<div class="sheet-bg" id="theorySheet" role="dialog" aria-modal="true" aria-label="Lesson">
+  <div class="sheet tall">
+    <div class="spread"><span class="pill brass">Lesson</span><button class="btn small ghost" data-close>Close</button></div>
+    <div id="theoryBody" class="lessonbody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="vendor/supabase.js"></script>
 <script src="js/config.js"></script>
+<script src="js/music.js"></script>
+<script src="js/theory.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

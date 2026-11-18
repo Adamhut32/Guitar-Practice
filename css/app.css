@@ -87,7 +87,7 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 /* nav */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--wood-2);border-top:1px solid var(--wood-3);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
-nav.tabs .inner{display:grid;grid-template-columns:repeat(4,1fr);width:100%;max-width:560px}
+nav.tabs .inner{display:grid;grid-template-columns:repeat(5,1fr);width:100%;max-width:560px}
 nav.tabs button{background:none;border:0;padding:12px 4px 14px;font-weight:600;font-size:13px;color:var(--dust);cursor:pointer;border-top:2px solid transparent}
 nav.tabs button[aria-current="page"]{color:var(--brass);border-top-color:var(--brass)}
 /* sheet */
@@ -111,3 +111,47 @@ a{color:var(--brass)}
 .app.hidden-app{display:none}
 input[type=email],input[type=password],input[type=date]{background:var(--wood);border:1px solid var(--wood-3);border-radius:10px;padding:10px;min-height:44px;width:100%}
 body{padding-top:env(safe-area-inset-top)}
+/* lessons */
+.sheet.tall{max-height:96%;min-height:70%}
+.lessonbody{display:flex;flex-direction:column;gap:14px}
+.lessonbody p{margin:0;max-width:65ch}
+.lessonbody h3{margin-top:6px}
+.chordgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.chordbox{position:relative;background:var(--wood);border:1px solid var(--wood-3);border-radius:12px;padding:6px 6px 8px;color:var(--bone);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.chordbox:hover{border-color:var(--brass)}
+.chordbox b{font-family:var(--display);font-size:17px}
+.chordbox .num{position:absolute;top:6px;right:8px;font-family:var(--mono);font-size:12px;color:var(--brass)}
+.chordbox.unknown{padding:14px;color:var(--dust);font-size:12px}
+.chordsvg{width:84px;height:100px;color:var(--dust)}
+.chordsvg .dot{fill:var(--brass)}
+.chordsvg .dotnum{fill:#1f1714;font-weight:700;font-family:var(--body)}
+.steps{display:flex;flex-direction:column;gap:6px}
+.stepitem{display:flex;flex-direction:row;gap:12px;align-items:flex-start;padding:10px;border:1px solid var(--wood-3);border-radius:10px;background:var(--wood);color:var(--bone);font-size:15px}
+.stepitem input{width:22px;height:22px;margin-top:2px;accent-color:var(--sage);flex:none}
+.stepitem.isdone{opacity:.6}
+.stepitem.isdone b{text-decoration:line-through}
+.nextstep{font-size:13px;color:var(--bone);width:100%}
+.strum{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--wood-3)}
+.strum:last-child{border-bottom:0}
+.pattern{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-width:360px}
+.slot{display:flex;flex-direction:column;align-items:center;font-family:var(--mono);font-size:18px;color:var(--brass);background:var(--wood);border:1px solid var(--wood-3);border-radius:8px;padding:4px 0}
+.slot i{font-style:normal;font-size:11px;color:var(--dust)}
+.slot.rest{color:var(--wood-3)}
+.section{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--wood-3)}
+.section:last-child{border-bottom:0}
+.seq{display:flex;flex-direction:column;gap:8px}
+.seqchords{display:flex;flex-wrap:wrap;gap:6px}
+.sc{font-family:var(--mono);padding:6px 9px;border-radius:8px;border:1px solid var(--wood-3);background:var(--wood);display:inline-flex;flex-direction:column;align-items:center;min-width:42px;font-size:15px}
+.sc small{font-size:10px;color:var(--dust)}
+.sc.on{background:var(--brass);border-color:var(--brass);color:#1f1714}
+.sc.on small{color:#1f1714}
+.try{border-left:3px solid var(--sage);background:rgba(143,181,138,.08);padding:10px 12px;border-radius:8px;display:flex;flex-direction:column;gap:4px}
+.playbtn{align-self:flex-start}
+.quiz{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--wood-3);padding-top:10px}
+.q{display:flex;flex-direction:column;gap:8px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{background:var(--wood);border:1px solid var(--wood-3);border-radius:10px;padding:10px;min-height:44px;cursor:pointer;font-weight:600;text-align:left}
+.opt.right{border-color:var(--sage);background:rgba(143,181,138,.15)}
+.opt.wrong{border-color:var(--rust);background:rgba(217,119,78,.12)}
+#alertsRow{gap:10px;align-items:center;justify-content:center;text-align:center}
+nav.tabs button{font-size:12px}
