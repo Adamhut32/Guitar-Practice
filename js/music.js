@@ -56,6 +56,13 @@ function silentWav(){
   for(let i=0;i<n;i++) v.setUint8(o++,128);
   let b = ""; new Uint8Array(buf).forEach(x=> b += String.fromCharCode(x)); return "data:audio/wav;base64,"+btoa(b);
 }
+function beepWav(){
+  const sr = 22050, n = Math.floor(sr*0.4), buf = new ArrayBuffer(44+n*2), v = new DataView(buf); let o = 0;
+  const str = s=>{ for(const c of s) v.setUint8(o++, c.charCodeAt(0)); }, u32 = x=>{ v.setUint32(o,x,true); o+=4; }, u16 = x=>{ v.setUint16(o,x,true); o+=2; };
+  str("RIFF"); u32(36+n*2); str("WAVE"); str("fmt "); u32(16); u16(1); u16(1); u32(sr); u32(sr*2); u16(2); u16(16); str("data"); u32(n*2);
+  for(let i=0;i<n;i++){ const env = Math.min(1, i/200) * Math.max(0, 1 - i/n); v.setInt16(o, Math.sin(2*Math.PI*880*i/sr)*12000*env, true); o+=2; }
+  let b = ""; new Uint8Array(buf).forEach(x=> b += String.fromCharCode(x)); return "data:audio/wav;base64,"+btoa(b);
+}
 function unlock(){
   if(unlocked) return; unlocked = true;
   try{ if(navigator.audioSession) navigator.audioSession.type = "playback"; }catch(e){}
@@ -139,5 +146,5 @@ const NUMBERS = { // diatonic chords by key
 const NUM_LABELS = ["1","2m","3m","4","5","6m"];
 function chordNumber(chord, key){ const list = NUMBERS[key]; if(!list) return ""; const i = list.indexOf(chord.replace(/(add9|sus2|sus4|7)$/,"")); return i<0?"":NUM_LABELS[i]; }
 
-window.Music = { out: ()=>{ audio(); return out(); }, SHAPES, chordSVG, strum, playMidi, playSequence, stop, audio, scaleMidis, NUMBERS, NUM_LABELS, chordNumber, noteName, chordNotes };
+window.Music = { beepWav, out: ()=>{ audio(); return out(); }, SHAPES, chordSVG, strum, playMidi, playSequence, stop, audio, scaleMidis, NUMBERS, NUM_LABELS, chordNumber, noteName, chordNotes };
 })();

@@ -678,6 +678,19 @@ $("bpmRange").oninput=e=>setBpm(Number(e.target.value));
 $("beatsSel").onchange=e=>{ beats=Number(e.target.value); drawDots(); };
 $("metroBtn").onclick=toggleMetro;
 $("tapBtn").onclick=tap;
+const APP_VERSION = "4";
+$("soundTestBtn").onclick=()=>{
+  const c = Music.audio(); const info = [];
+  info.push("app v"+APP_VERSION);
+  info.push("web audio: "+(c?c.state:"not available"));
+  if(c){ try{ const t=c.currentTime; const o=c.createOscillator(), g=c.createGain(); o.frequency.value=660; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.5,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.6); o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.65); }catch(e){ info.push("tone error: "+e.message); } }
+  setTimeout(()=>{
+    try{ const a = new Audio(Music.beepWav()); a.setAttribute("playsinline",""); const p=a.play(); if(p&&p.then) p.then(()=>{ info.push("media beep: played"); show(); }).catch(e=>{ info.push("media beep: blocked ("+e.name+")"); show(); }); }catch(e){ info.push("media beep error"); }
+    show();
+  }, 800);
+  function show(){ $("soundInfo").textContent = info.join(" · ")+" · audioSession: "+(navigator.audioSession?navigator.audioSession.type:"n/a")+" · standalone: "+(window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true); }
+  setTimeout(()=>{ info[1]="web audio: "+(c?c.state:"n/a"); show(); }, 300);
+};
 $("saveTempoBtn").onclick=()=>{ const s=state.songs.find(x=>x.id===$("tempoSong").value); if(!s){ toast("Add a song first"); return; } s.tempo=bpm; (s.tempoLog=s.tempoLog||[]).push({d:todayStr(),bpm}); persist(); toast(s.title+": "+bpm+" BPM saved"); renderAll(); };
 $("saveBmBtn").onclick=()=>{ const v=Number($("bmVal").value); if(!(v>0)){ $("bmVal").focus(); return; } (state.benchmarks=state.benchmarks||[]).push({id:uid(),type:$("bmType").value,value:v,d:todayStr()}); $("bmVal").value=""; persist(); toast("Result saved"); renderProgress(); };
 $("authForm").addEventListener("submit", submitAuth);

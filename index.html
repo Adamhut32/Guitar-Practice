@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/app.css?v=4">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
@@ -103,6 +103,12 @@
         </label>
         <button class="btn primary" id="metroBtn" style="min-width:120px">Start</button>
       </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Sound check</h3>
+      <div class="sub">No sound? Tap this and tell Claude what it shows.</div>
+      <div class="row"><button class="btn" id="soundTestBtn">Test sound</button></div>
+      <div class="sub mono" id="soundInfo"></div>
     </div>
     <div class="card" style="margin-top:16px">
       <h3>Log this tempo</h3>
@@ -254,9 +260,9 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="vendor/supabase.js"></script>
-<script src="js/config.js"></script>
-<script src="js/music.js"></script>
-<script src="js/theory.js"></script>
-<script src="js/app.js"></script>
+<script src="js/config.js?v=4"></script>
+<script src="js/music.js?v=4"></script>
+<script src="js/theory.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>
