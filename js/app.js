@@ -461,7 +461,7 @@ function deleteSong(){
 
 /* ---------- metronome ---------- */
 let actx=null, metroOn=false, bpm=80, beats=4, nextTime=0, beatIdx=0, timerId=null, taps=[];
-function ensureAudio(){ if(!actx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) actx=new AC(); } if(actx&&actx.state==="suspended") actx.resume(); return actx; }
+function ensureAudio(){ actx = Music.audio(); return actx; }
 function click(t, accent){
   const o=actx.createOscillator(), g=actx.createGain();
   o.frequency.value = accent?1600:1000; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(accent?0.6:0.35,t+0.002); g.gain.exponentialRampToValueAtTime(0.0001,t+0.06);

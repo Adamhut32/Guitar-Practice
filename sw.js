@@ -1,6 +1,6 @@
 // Offline support: the app is fetched fresh when online and falls back to the saved copy offline.
 // Bump VERSION whenever the app's files change.
-const VERSION = "practice-v2";
+const VERSION = "practice-v3";
 const SHELL = ["./", "index.html", "css/app.css", "js/config.js", "js/app.js", "js/music.js", "js/theory.js", "data/song-lessons.json", "vendor/supabase.js", "vendor/591.supabase.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/apple-touch-icon.png", "data/starter-songs.json"];
 self.addEventListener("install", e => {
